@@ -1,0 +1,410 @@
+<apex:component Controller="ConfigurationCleanUpService" allowDML="true">
+     <apex:attribute name="typeofConfig" description="sample" type="String" required="true"/>
+    <apex:attribute name="Header1" description="" type="String" required="true"/>
+    <apex:attribute name="Header2" description="" type="String" required="true"/>
+    <apex:attribute name="Icon1" description="" type="String" required="true"/>
+    <apex:attribute name="jsonData" description="" type="String" required="true"/>
+    
+    <apex:form >
+       <script>
+			j$ = jQuery.noConflict();
+              toastr.options = {
+  				"closeButton": false,
+  				"debug": false,
+  				"newestOnTop": false,
+  				"progressBar": false,
+  				"positionClass": "toast-top-right",
+  				"preventDuplicates": false,
+  				"onclick": null,
+  				"showDuration": "300",
+  				"hideDuration": "1000",
+  				"timeOut": "5000",
+  				"extendedTimeOut": "1000",
+  				"showEasing": "swing",
+  				"hideEasing": "linear",
+  				"showMethod": "fadeIn",
+  				"hideMethod": "fadeOut"
+			}; 
+          debugger;
+        var configTypeSingle = '{!typeofConfig}';
+         var configJsonData{!typeofConfig} = {!jsonData};
+      	
+        var {!typeofConfig}PreviewTable;//triggerPreviewTable
+        var {!typeofConfig}SelectedTable;//selectedTriggersTable
+        //var {!typeofConfig}ObjTable;//triggerObjTable
+        var {!typeofConfig}ObjectData = [];//triggersObjectData
+        var {!typeofConfig}Data = [];//triggersData
+        var {!typeofConfig}SelectedData = [];//selectedTriggersData
+
+             function delete{!typeofConfig}() {	
+                showLoader();
+                 var {!typeofConfig}ToDelete = [];
+                 
+                //Added for getting names of selected apex classes
+                if('{!typeofConfig}'=='ApexClass'){
+                	if({!typeofConfig}SelectedData != null){
+	                 	for(var iCount = 0;iCount < {!typeofConfig}SelectedData.length;iCount++){
+	                 		if({!typeofConfig}ToDelete != ''){
+	                    	{!typeofConfig}ToDelete = {!typeofConfig}SelectedData[iCount].name +','+ {!typeofConfig}ToDelete;
+	                        }
+	                        else{
+	                            {!typeofConfig}ToDelete = {!typeofConfig}SelectedData[iCount].name;
+	                        }
+	                    }
+	                 }
+                }
+                //Added for getting names of selected apex classes
+                
+                else{
+	                 if({!typeofConfig}SelectedData != null){
+	                 	for(var iCount = 0;iCount < {!typeofConfig}SelectedData.length;iCount++){
+	                 		if({!typeofConfig}ToDelete != ''){
+	                    	{!typeofConfig}ToDelete = {!typeofConfig}SelectedData[iCount].configID +','+ {!typeofConfig}ToDelete;
+	                        }
+	                        else{
+	                            {!typeofConfig}ToDelete = {!typeofConfig}SelectedData[iCount].configID;
+	                        }
+	                    }
+	                 }
+                 }
+                 if({!typeofConfig}ToDelete != null && {!typeofConfig}ToDelete.length > 0){
+                 
+                 	//added for handling call base on config type
+                 	if('{!typeofConfig}'=='ApexClass'){
+                 		ApexClassDeletion({!typeofConfig}ToDelete,'{!typeofConfig}');
+                 	}
+    				else{
+    					CleanConfigurations{!typeofConfig}({!typeofConfig}ToDelete,'{!typeofConfig}');
+    				}
+    				//added for handling call base on config type
+    			}
+    			else{
+                    hideLoader();
+    				toastr.error('No triggers selected');
+    			}
+			}
+          
+
+    
+            
+            j$(document).delegate("#{!typeofConfig}byObjectDTTable .object{!typeofConfig}", "click", function() {
+                
+                var tableRow = j$(this).closest('tr');
+                var isSelected = this.checked;
+                var selectedData = {!typeofConfig}PreviewTable.row(tableRow).data();
+                loadSelected{!typeofConfig}Table(selectedData.name,isSelected);
+                if(isSelected){
+                toastr.success(selectedData.name + ' triggers added in Selected Triggers section');
+                }
+			});
+           j$(document).ready(function () {
+               
+               {!typeofConfig}SelectedTable = j$('#{!typeofConfig}SelectedDTTable').DataTable({
+         		"paging":   false,
+        		"ordering": false,
+        		"info":     false
+      			});
+                        for (var i = 0; i < configJsonData{!typeofConfig}.data.length; i++) {
+                            var item = configJsonData{!typeofConfig}.data[i];
+                            if(item.parent == ''){
+                            	{!typeofConfig}ObjectData.push({
+                                	"name": item.name
+                            	}); 
+                            }
+                        }
+                 
+                    {!typeofConfig}PreviewTable = j$('#{!typeofConfig}byObjectDTTable').DataTable({
+        			data: {!typeofConfig}ObjectData,
+                        "oLanguage": {
+         					"sInfo": "_TOTAL_ entries",//"_START_ to _END_ of _TOTAL_ entries",
+         					"sInfoEmpty": "0 to 0 of 0 entries",
+                            "oPaginate": {
+                                //"sFirst": "First page", // This is the link to the first page
+								"sPrevious": "<", // This is the link to the previous page
+                                "sNext": ">"//, // This is the link to the next page
+                                //"sLast": "Last page" // This is the link to the last page
+							}
+      					},
+        			columns: [
+           					{ "data": "name" },
+             				{"data":   "name",'bSortable': false,
+                				render: function ( data, type, row ) {
+                    			if ( type === 'display' ) {
+                                    return '<input id="{!typeofConfig}ObjectCheck_'+row.name+'" class="object{!typeofConfig}" type="checkbox" />';
+                    			}
+                    			return data;
+                						}
+            				}
+        		]});
+        		
+        		if (!j$.fn.DataTable.isDataTable('#selectedPages') && !j$.fn.DataTable.isDataTable('#selectedClasses') && !j$.fn.DataTable.isDataTable('#selectedTriggers'))
+        		{
+        			var emptyJson='{"data":[]}';
+	        		getDependentClasses(emptyJson);
+	               	getDependentPages(emptyJson);
+	              	getDependentTriggers(emptyJson);
+        		}
+        		else
+        		{
+        			destroyTables();
+        			var emptyJson='{"data":[]}';
+	        		getDependentClasses(emptyJson);
+	               	getDependentPages(emptyJson);
+	              	getDependentTriggers(emptyJson);
+        		}
+        		
+        		
+        		//added to initiate depedents tables with empty json
+        		
+              	//added to initiate depedents tables with empty json
+              	
+              		
+			});
+           
+            function loadSelected{!typeofConfig}Table(objectName,isSelected){
+                console.log(objectName);
+                
+                 {!typeofConfig}SelectedData = [];
+                        for (var i = 0; i < configJsonData{!typeofConfig}.data.length; i++) {
+                            var item = configJsonData{!typeofConfig}.data[i];
+                            if(item.name == objectName){
+                    			item.enbl = isSelected ? '1' : '0';
+                            }	
+                            if(item.enbl == '1'){
+                            		{!typeofConfig}SelectedData.push({
+                                		"name": item.name,
+                                        "configID":item.configID+'$'+item.name
+                            		}); 
+                                }
+                        }
+                {!typeofConfig}SelectedTable.destroy();
+                {!typeofConfig}SelectedTable = j$('#{!typeofConfig}SelectedDTTable').DataTable( {
+        			data: {!typeofConfig}SelectedData,
+                    "oLanguage": {
+                        "sInfo": "_TOTAL_ entries",//"_START_ to _END_ of _TOTAL_ entries",
+         					"sInfoEmpty": "0 to 0 of 0 entries",
+                        	"oPaginate": {
+								"sPrevious": "<", // This is the link to the previous page
+                                "sNext": ">"// This is the link to the next page
+							}
+      					},
+					columns: [{ "data": "name" },{ "data": "configID", "visible": false }]});
+                  
+            }
+         	function CleanConfigurationsCompleted(){
+                hideLoader();
+         	toastr.success('Batch is initiated. Email notification will be sent to you soon.');
+         	}
+         	
+         	//Added to prepare dependent tables
+         	function getDependentClasses(dependentClasses) {
+        		debugger;
+        		//dependentClassesTabel.destroy();
+	        	var lstdependent = JSON.parse(dependentClasses);  
+	        	var lstDependentClasses=[];
+	        	j$("#dependentClasses").append("<ul></ul>");
+	        	for (var i = 0; i < lstdependent.data.length; i++) {
+                            var item = lstdependent.data[i];
+                            lstDependentClasses.push({
+                                		"name": item.name
+                            		});
+                        }
+	        	 debugger;
+    	 		dependentClassesTabel=j$('#selectedClasses').DataTable({
+        	 	data:lstDependentClasses,
+         		"oLanguage": {
+                        "sInfo": "_TOTAL_ entries",//"_START_ to _END_ of _TOTAL_ entries",
+         					"sInfoEmpty": "0 to 0 of 0 entries",
+                        	"oPaginate": {
+								"sPrevious": "<", // This is the link to the previous page
+                                "sNext": ">"// This is the link to the next page
+							}
+      					},
+         		columns: [
+            		{ "data": "name"}
+	         	] 
+    	 		});
+			}
+			
+			function getDependentPages(dependentPages) {
+        		debugger;
+        		//dependentPagesTabel.destroy();
+	        	var lstdependent = JSON.parse(dependentPages);  
+	        	var lstDependentPages=[];
+	        	for (var i = 0; i < lstdependent.data.length; i++) {
+                            var item = lstdependent.data[i];
+                            lstDependentPages.push({
+                                		"name": item.name
+                            		});
+                        }
+	        	
+    	 		dependentPagesTabel=j$('#selectedPages').DataTable({
+        	 	data:lstDependentPages,
+        	 	"oLanguage": {
+                        "sInfo": "_TOTAL_ entries",//"_START_ to _END_ of _TOTAL_ entries",
+         					"sInfoEmpty": "0 to 0 of 0 entries",
+                        	"oPaginate": {
+								"sPrevious": "<", // This is the link to the previous page
+                                "sNext": ">"// This is the link to the next page
+							}
+      					},
+         		columns: [
+            		{ "data": "name"}
+	         	] 
+    	 		});
+			}
+			
+			function getDependentTriggers(dependentriggers) {
+        		debugger;
+        		//dependentTriggersTabel.destroy();
+	        	var lstdependent = JSON.parse(dependentriggers);
+	        	var lstDependentTriggers=[];   
+	        	for (var i = 0; i < lstdependent.data.length; i++) {
+                            var item = lstdependent.data[i];
+                            lstDependentTriggers.push({
+                                		"name": item.name
+                            		});
+                        }
+    	 		dependentTriggersTabel=j$('#selectedTriggers').DataTable({
+        	 	data:lstDependentTriggers,
+        	 	"oLanguage": {
+                        "sInfo": "_TOTAL_ entries",//"_START_ to _END_ of _TOTAL_ entries",
+         					"sInfoEmpty": "0 to 0 of 0 entries",
+                        	"oPaginate": {
+								"sPrevious": "<", // This is the link to the previous page
+                                "sNext": ">"// This is the link to the next page
+							}
+      					},
+         		columns: [
+            		{ "data": "name"}
+	         	] 
+    	 		});
+			}
+			//Added to prepare dependent tables
+         	
+         	//Added to destroy dependent tables
+         	function destroyTables(){
+         		dependentClassesTabel.destroy();
+         		dependentPagesTabel.destroy();
+         		dependentTriggersTabel.destroy();
+         	}
+         	//Added to destroy dependent tables
+         	
+         	//Added to display dependent tables in popup
+         	function CheckData(a,b,c){
+				destroyTables();
+				console.log("Inside console");
+                console.log(a);
+				console.log(b);
+				console.log(c);
+                getDependentClasses(b);
+                getDependentPages(a);
+                getDependentTriggers(c);
+				j$('#load').modal('show');
+				CleanConfigurationsCompleted();
+			}
+			//Added to display dependent tables in popup
+         	
+         	//call to delete classes
+         	function callForDelete(){
+         		//alert("Call given for delete classes");
+				deleteSelectedClasses();
+			}
+			//call to delete classes
+         	
+		</script>
+	<body>
+      
+  
+         <div class="row">
+  			<div class="col-md-4">
+                 <h3>
+                   <span class="{!Icon1}" aria-hidden="true"></span> {!Header1}
+                </h3>
+    			<table id="{!typeofConfig}byObjectDTTable" class="display" width="100%"><!--triggersbyObjectDTTable-->
+        		<thead>
+            		<tr>
+                		<th>Name</th>
+                		<th></th>
+            		</tr>
+        		</thead>
+        		<tfoot>
+            		<tr>
+                		<th>Name</th>
+                		<th></th>
+            		</tr>
+        		</tfoot>
+        		</table>	
+            </div>   
+  			<div class="col-md-4">
+                 <h3>
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span> {!Header2} 
+                </h3>
+    			<table id="{!typeofConfig}SelectedDTTable" class="display" width="100%"><!--selectedTriggersDTTable-->
+        		<thead>
+            		<tr>
+                		<th>Name</th>
+                        <th></th>
+            		</tr>
+        		</thead>
+        		<tfoot>
+            		<tr>
+                		<th>Name</th>
+                        <th></th>
+            		</tr>
+        		</tfoot>
+        		</table>
+            </div>
+             <div class="col-md-4"></div>
+		</div>
+				<div class="btn-group" style="float:right;">
+  <p><apex:outputText value="" id="view" /></p>
+        <apex:actionFunction name="ApexClassDeletion" action="{!dependents}" rerender="" oncomplete="dependentPages='{!dependentPagesJson}';dependentClasses='{!dependentClassesJson}';dependentTriggers='{!dependentTriggersJson}';CheckData(dependentPages,dependentClasses,dependentTriggers);">     
+     		<apex:param id="ConfigListParam" name="ConfigList"  assignTo="{!ConfigurationList}" value="" />
+            <apex:param id="configNameParam" name="configName"  assignTo="{!ConfigName}" value="" />
+ 		</apex:actionFunction>
+ 		
+ 		<apex:actionFunction name="deleteSelectedClasses" action="{!deleteclasses}">
+ 			
+ 		</apex:actionFunction>
+ 		
+ 		<apex:actionFunction name="CleanConfigurations{!typeofConfig}" action="{!CleanConfigurations}" rerender="view" oncomplete="CleanConfigurationsCompleted();">     
+     		<apex:param id="ConfigListParameter" name="ConfigList"  assignTo="{!ConfigurationList}" value="" />
+            <apex:param id="configNameParameter" name="configName"  assignTo="{!ConfigName}" value="" />
+ 		</apex:actionFunction>
+ 		
+        <apex:commandLink onclick="delete{!typeofConfig}();return false;" rerender="">               
+       		<apex:commandButton value="Proceed" styleClass="btn btn-default" />
+        </apex:commandLink>
+</div>
+      
+	</body>
+	
+	<div class="modal fade" id="load" role="dialog">
+  <div class="modal-dialog modal-md">
+   <!-- Modal content-->
+   <div class="modal-content">
+    <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+     <h4 class="modal-title">Summary</h4>
+    </div>
+    <div class="modal-body" style="overflow-y: auto; height: 500px;" id="dependentClasses">  
+     <font size="4" color="#ff794d">Dependent Pages </font>
+     
+      <table id="selectedPages" class="display"></table>
+     <br /> <br />
+     <font size="4" color="#ff794d">Dependent Classes </font>
+     <table id="selectedClasses" class="display"></table>
+     <br /> <br />
+     <font size="4" color="#ff794d">Dependent Triggers </font>
+     <table id="selectedTriggers" class="display"></table>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" onClick="callForDelete();">Confirm</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+    </div>
+   </div>
+   </div>
+  </div>
+	</apex:form>
+</apex:component>

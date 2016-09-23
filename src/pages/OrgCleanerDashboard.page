@@ -1,0 +1,80 @@
+<apex:page standardStylesheets="false" showHeader="false" sidebar="false" controller="OrgCleanerDashboardController">
+    <apex:stylesheet value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/css/font-awesome.css')}" />
+     <apex:stylesheet value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/css/bootstrap.min.css')}" />
+    <style>
+html{
+	background: #3498db;        
+}
+        header{ 
+  background:#1c445f; 
+  height:50px; 
+}
+.menu{
+  margin:100px auto auto 21%;
+  background:tranparent;
+  width:auto;}
+.nav{
+  font-family:'Oswald', sans-serif;
+  text-transform:uppercase;
+  text-decoration:none;
+  display:inline;
+  height: 120px;
+  margin: 2px 0px 0px 2px;
+  overflow: hidden;
+  float:left;
+  text-align: center;
+        background:#1b6fa7;//#66415C;
+  color: #fff;
+  transition: all .2s ease, box-shadow .5s ease;
+  -webkit-transition: all .2s ease,box-shadow 5.s ease;
+  box-shadow: 0px 0px 0px 0px rgba(255,255,255,.5),0px 0px 0px 0px rgba(255,255,255,1);
+  cursor: pointer;}
+.nav:hover {
+    background: rgba(255,255,255,.5);
+    color: #66415C;;
+    box-shadow: 0px 0px 0px 20px rgba(255,255,255,.5),0px 0px 0px 40px rgba(255,255,255,0);
+  transform::scale(1);
+-webkit-transform:scale(1);
+  }
+ .nav:hover .icon:first-child {
+    margin-top: -150px;
+  }
+  .icon {
+    height: 150px;
+    width: 188px;
+    line-height: 120px;
+    font-size: 18px;
+   transition: margin 0.8s;
+-webkit-transition: margin 0.8s;
+  }
+  .detail{
+  	font-size: 13px;
+  }
+}
+</style>
+<apex:form >
+<apex:actionFunction name="ConfigurationCleanUp" action="{!ConfigurationCleanUp}"></apex:actionFunction>  
+</apex:form>
+    <header>HEADER</header>
+<nav class='menu'>
+<span class="nav">
+  <div class="icon">Full Org <i class="fa fa-home"></i></div>
+  <div class="icon detail">Full Org Clean Up</div>
+</span>
+<span class="nav">
+  <div class="icon">Custom Data <i class="fa fa-gear fa-spin"></i>
+</div>
+  <div class="icon detail">Custom Data Clean Up</div>
+</span>
+<span class="nav">
+  <div class="icon">Standard Data <i class="fa fa-book fa-fw"></i></div>
+  <div class="icon detail">Standard Data Clean Up</div>
+</span>
+    
+<span class="nav" href="#" onclick="ConfigurationCleanUp();">
+  <div class="icon">Configuration <i class="fa fa-camera-retro"></i></div>
+  <div class="icon detail">Configuration Clean Up</div>
+</span>
+
+</nav>
+</apex:page>

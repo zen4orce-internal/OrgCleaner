@@ -1,0 +1,198 @@
+<apex:page controller="ConfigurationCleanUpService" showHeader="false" sidebar="false" standardStylesheets="false">
+    <apex:includeScript value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/js/jquery.min.js')}"/>
+    <apex:includescript value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/js/bootstrap.min.js')}" / >
+	<apex:includescript value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/js/jquery.dataTables.js')}" />
+    <apex:includescript value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/js/toastr.js')}" />
+	<apex:stylesheet value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/css/jquery.dataTables.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/css/bootstrap-theme.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/css/bootstrap.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/css/toastr.css')}" />    
+    <apex:stylesheet value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/css/custom.css')}" />
+    <apex:form >
+        <apex:actionFunction name="Dashboard" action="{!Dashboard}">     
+	 	</apex:actionFunction>   
+    	<apex:actionFunction name="GetTriggerDetails" action="{!GetConfigDetails}" rerender="renderTrigger" oncomplete="GetDetailsOnCompleted();">     
+    		<apex:param id="CurrentConfigTrigger" name="CurrentConfig"  assignTo="{!CurrentConfig}" value="" />
+	 	</apex:actionFunction>   
+        <apex:actionFunction name="GetApexPageDetails" action="{!GetConfigDetails}" rerender="renderApexPage" oncomplete="GetDetailsOnCompleted();">     
+    		<apex:param id="CurrentConfigApexPage" name="CurrentConfig"  assignTo="{!CurrentConfig}" value="" />
+	 	</apex:actionFunction>
+        <apex:actionFunction name="GetWorkflowRuleDetails" action="{!GetConfigDetails}" rerender="renderWorkflowRule" oncomplete="GetDetailsOnCompleted();">     
+    		<apex:param id="CurrentConfigWorkflowRule" name="CurrentConfig"  assignTo="{!CurrentConfig}" value="" />
+	 	</apex:actionFunction>
+        <apex:actionFunction name="GetValidationRuleDetails" action="{!GetConfigDetails}" rerender="renderValidationRule" oncomplete="GetDetailsOnCompleted();">     
+    		<apex:param id="CurrentConfigValidationRule" name="CurrentConfig"  assignTo="{!CurrentConfig}" value="" />
+	 	</apex:actionFunction>
+         <apex:actionFunction name="GetApexClassDetails" action="{!GetConfigDetails}" rerender="renderApexClass" oncomplete="GetDetailsOnCompleted();">     
+    		<apex:param id="CurrentApexClass" name="CurrentConfig"  assignTo="{!CurrentConfig}" value="" />
+	 	</apex:actionFunction>
+          <apex:actionFunction name="GetCustomFieldDetails" action="{!GetConfigDetails}" rerender="renderCustomField" oncomplete="GetDetailsOnCompleted();">     
+    		<apex:param id="CurrentCustomFieldDetails" name="CurrentConfig"  assignTo="{!CurrentConfig}" value="" />
+	 	</apex:actionFunction>
+    </apex:form>
+      <style>
+      
+        </style>
+       <script>
+        j$ = jQuery.noConflict();
+        function hideLoader(){
+        	j$(".loaderWrap").hide();
+        }
+         function showLoader(){
+        	j$(".loaderWrap").show();
+        }
+        function GetDetailsOnCompleted(){
+            hideLoader();
+        }
+        j$(document).ready(function(){
+        hideLoader();
+            j$('.panel-group').on('hidden.bs.collapse', toggleIcon);
+    		j$('.panel-group').on('shown.bs.collapse', toggleIcon);
+            
+            j$(".panelOpener").click(function(){
+                if(j$(this).attr('class').indexOf('collapsed') >= 0){
+                    showLoader();
+                	console.log('opened');
+                    if(j$(this).attr('area') == 'Trigger'){
+                    	GetTriggerDetails('Trigger');
+                    }
+                    if(j$(this).attr('area') == 'ApexPage'){
+                    	GetApexPageDetails('ApexPage');
+                    }
+                    if(j$(this).attr('area') == 'WorkflowRule'){
+                    	GetWorkflowRuleDetails('WorkflowRule');
+                    }
+                    if(j$(this).attr('area') == 'ValidationRule'){
+                    	GetValidationRuleDetails('ValidationRule');
+                    }
+                     if(j$(this).attr('area') == 'ApexClass'){
+                    	GetApexClassDetails('ApexClass');
+                    }
+                    if(j$(this).attr('area') == 'CustomField'){
+                    GetCustomFieldDetails('CustomField');
+                    }
+                }
+            });
+        });
+        function toggleIcon(e) {
+            debugger;
+        j$(e.target).prev('.panel-heading').find(".more-less").toggleClass('glyphicon-plus glyphicon-minus');
+    }
+        </script>
+        <div class="header">Org Cleaner&nbsp;<span class="miniheader">by Zenforce</span></div>
+         <a onclick="Dashboard();">HOME</a>
+        <div class="container demo">
+
+	
+	<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+
+		<div class="panel panel-default">
+			<div class="panel-heading" role="tab" id="headingOne">
+				<h4 class="panel-title">
+					<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne" class="collapsed panelOpener" area="Trigger">
+						<i class="more-less glyphicon glyphicon-plus"></i>
+						Triggers
+					</a>
+				</h4>
+			</div>
+			<div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+				<div class="panel-body">
+                  <apex:outPutPanel id="renderTrigger">
+					    <c:datatableGroup typeofConfig="Trigger" header1="Object" header2="Triggers" header3="Selected Triggers" icon1="glyphicon glyphicon-wrench" rendered="{!IsTrigger}" jsonData="{!triggersJson}"/>
+                    </apex:outPutPanel>                 
+				</div>
+			</div>
+		</div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading" role="tab" id="headingTwo">
+				<h4 class="panel-title">
+					<a class="collapsed panelOpener" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo" area="ApexPage">
+						<i class="more-less glyphicon glyphicon-plus"></i>
+						Apex Pages
+					</a>
+				</h4>
+			</div>
+			<div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+				<div class="panel-body">
+                   <apex:outPutPanel id="renderApexPage">
+						 <c:datatableSingle typeofConfig="ApexPage" header1="Apex Pages" header2="Selected Apex Pages" icon1="glyphicon glyphicon-list"  rendered="{!IsApexPage}" jsonData="{!apexPageJson}"/>
+                    </apex:outPutPanel> 
+				</div>
+			</div>
+		</div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading" role="tab" id="headingThree">
+				<h4 class="panel-title">
+					<a class="collapsed panelOpener" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree" area="WorkflowRule"> 
+						<i class="more-less glyphicon glyphicon-plus"></i>
+						Workflows
+					</a>
+				</h4>
+			</div>
+			<div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+				<div class="panel-body">
+                    <apex:outPutPanel id="renderWorkflowRule">
+                    	<c:datatableGroup typeofConfig="WorkflowRules" header1="Object" header2="Workflow Rules" header3="Selected Workflow Rules" icon1="glyphicon glyphicon-wrench"  rendered="{!IsWorkflowRule}" jsonData="{!workflowJson}"/> 
+                    </apex:outPutPanel>
+				</div>
+			</div>
+		</div>
+        
+        <div class="panel panel-default">
+			<div class="panel-heading" role="tab" id="headingFour">
+				<h4 class="panel-title">
+					<a class="collapsed panelOpener" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFour" aria-expanded="false" aria-controls="collapseThree" area="ValidationRule">
+						<i class="more-less glyphicon glyphicon-plus"></i>
+						Validation Rules
+					</a>
+				</h4>
+			</div>
+			<div id="collapseFour" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFour">
+				<div class="panel-body">
+                    <apex:outPutPanel id="renderValidationRule">
+                    	 <c:datatableGroup typeofConfig="ValidationRules" header1="Object" header2="Validation Rules" header3="Selected Validation Rules" icon1="glyphicon glyphicon-wrench"  rendered="{!IsValidationRule}" jsonData="{!validationRuleJson}"/>
+                    </apex:outPutPanel>
+				</div>
+			</div>
+		</div>
+         <div class="panel panel-default">
+			<div class="panel-heading" role="tab" id="headingFive">
+				<h4 class="panel-title">
+					<a class="collapsed panelOpener" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFive" aria-expanded="false" aria-controls="collapseThree" area="ApexClass">
+						<i class="more-less glyphicon glyphicon-plus"></i>
+						Apex Class
+					</a>
+				</h4>
+			</div>
+			<div id="collapseFive" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFive">
+				<div class="panel-body">
+                    <apex:outPutPanel id="renderApexClass">
+                    	<c:datatableSingle typeofConfig="ApexClass" header1="Apex Classes" header2="Selected Apex Classes" icon1="glyphicon glyphicon-wrench"  rendered="{!IsApexClass}" jsonData="{!apexClassJson}"/>
+                    </apex:outPutPanel>
+				</div>
+			</div>
+		</div>
+        <div class="panel panel-default">
+			<div class="panel-heading" role="tab" id="headingSix">
+				<h4 class="panel-title">
+					<a class="collapsed panelOpener" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseSix" aria-expanded="false" aria-controls="collapseThree" area="CustomField">
+						<i class="more-less glyphicon glyphicon-plus"></i>
+						Custom Field
+					</a>
+				</h4>
+			</div>
+			<div id="collapseSix" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFive">
+				<div class="panel-body">
+                    <apex:outPutPanel id="renderCustomField">
+                         <c:datatableGroup typeofConfig="CustomField" header1="Object" header2="Custom Fields" header3="Selected Custom Fields" icon1="glyphicon glyphicon-wrench" rendered="{!IsCustomField}" jsonData="{!customFieldJson}"/>
+                    </apex:outPutPanel>
+				</div>
+			</div>
+		</div>
+	</div> 
+           
+</div>
+       <c:loader ></c:loader>
+</apex:page>

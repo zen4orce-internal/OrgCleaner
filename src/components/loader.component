@@ -1,0 +1,4 @@
+<apex:component >
+     <apex:stylesheet value="{!URLFOR($Resource.ConfigCleanUpJS, 'files/css/loader.css')}" />
+      <div class="loaderWrap"><div class="loader">Loading...</div></div>
+</apex:component>

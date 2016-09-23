@@ -1,0 +1,372 @@
+<apex:component Controller="DataCleanUpService">
+    <apex:attribute name="typeofConfig" description="sample" type="String" required="true"/>
+    <apex:attribute name="Header1" description="" type="String" required="true"/>
+    <apex:attribute name="Header2" description="" type="String" required="true"/>
+    <apex:attribute name="Icon1" description="" type="String" required="true"/>
+    <apex:pageMessages ></apex:pageMessages>
+    <apex:form >
+ 	<head> 
+		<script>
+			j$ = jQuery.noConflict();
+              toastr.options = 
+			{
+  				"closeButton": false,
+  				"debug": false,
+  				"newestOnTop": false,
+  				"progressBar": false,
+  				"positionClass": "toast-top-right",
+  				"preventDuplicates": false,
+  				"onclick": null,
+  				"showDuration": "300",
+  				"hideDuration": "1000",
+  				"timeOut": "5000",
+  				"extendedTimeOut": "1000",
+  				"showEasing": "swing",
+  				"hideEasing": "linear",
+  				"showMethod": "fadeIn",
+  				"hideMethod": "fadeOut"
+			}; 
+          
+         
+        var configType = '{!typeofConfig}';  //Config Names
+        var selectedData ; //Selected Object
+        var configJsonData{!typeofConfig};//triggerJsonData;
+  
+       	if(configType === "DeleteCustomData")
+		{
+            configJsonData{!typeofConfig} = {!customDataJson};
+   	    }
+        else if(configType === "DeleteStandardData")
+		{
+            configJsonData{!typeofConfig} = {!standardDataJson};
+   	    }
+        
+        var {!typeofConfig}PreviewTable;//triggerPreviewTable
+        var {!typeofConfig}SelectedTable;//selectedTriggersTable
+        
+        //var {!typeofConfig}ObjTable;//triggerObjTable
+        var {!typeofConfig}ObjectData = [];//triggersObjectData
+        var {!typeofConfig}Data = [];//triggersData
+        var {!typeofConfig}SelectedData = [];//selectedTriggersData
+        var dependentTable;        
+        function delete{!typeofConfig}() 
+		{	 //DeleteFunction 
+			var {!typeofConfig}ToDelete = [];
+            if({!typeofConfig}SelectedData != null)
+			{ //if is not equal to null
+               	for(var iCount = 0;iCount < {!typeofConfig}SelectedData.length;iCount++)
+				{
+               		if({!typeofConfig}ToDelete != '')
+					{
+						{!typeofConfig}ToDelete = {!typeofConfig}SelectedData[iCount].configID +','+ {!typeofConfig}ToDelete;
+                    }
+                   	else
+					{
+                          {!typeofConfig}ToDelete = {!typeofConfig}SelectedData[iCount].configID;
+                    }
+                 }
+		    }
+			if({!typeofConfig}ToDelete != null && {!typeofConfig}ToDelete.length > 0)
+			{ 
+   				CleanConfigurations{!typeofConfig}({!typeofConfig}ToDelete,'{!typeofConfig}');
+			}
+		    else
+			{
+   				toastr.error('No triggers selected');
+			}
+		}    
+		j$(document).delegate("#{!typeofConfig}byObjectDTTable .object{!typeofConfig}", "click", function() 
+		{
+                
+            debugger;    
+            var tableRow = j$(this).closest('tr');
+             console.log(tableRow);
+                var isSelected = this.checked;
+                var selectedData = {!typeofConfig}PreviewTable.row(tableRow).data();
+             console.log(tableRow);
+            console.log(selectedData);
+                loadSelected{!typeofConfig}Table(selectedData.name,isSelected);
+                if(isSelected)
+				{
+					toastr.success(selectedData.name + ' triggers added in Selected Triggers section');
+                }
+		});
+        j$(document).delegate("#{!typeofConfig}SelectedDTTable.linkData", "click", function() {
+                
+                var tableRow = j$(this).closest('tr');
+            
+            //var isSelected = this.checked;
+            console.log(tableRow);
+            var selectedData = {!typeofConfig}SelectedTable.row(tableRow).data();
+            //var name = selectedData.name
+              console.log(selectedData);
+                }
+			);
+		j$(document).ready(function () 
+		{
+               
+               {!typeofConfig}SelectedTable = j$('#{!typeofConfig}SelectedDTTable').DataTable({
+         		"paging":   false,
+        		"ordering": false,
+        		"info":     false
+      			});
+               debugger;         
+               for (var i = 0; i < configJsonData{!typeofConfig}.data.length; i++) 
+               {
+					var item = configJsonData{!typeofConfig}.data[i];
+					if(item.parent == '')
+					{
+						{!typeofConfig}ObjectData.push({
+    					"name": item.name}); 
+                    }
+                }
+                {!typeofConfig}PreviewTable = j$('#{!typeofConfig}byObjectDTTable').DataTable({
+       				data: {!typeofConfig}ObjectData,
+                    "oLanguage": {
+        					"sInfo": "_TOTAL_ entries",//"_START_ to _END_ of _TOTAL_ entries",
+         					"sInfoEmpty": "0 to 0 of 0 entries",
+                            "oPaginate": {
+                                //"sFirst": "First page", // This is the link to the first page
+								"sPrevious": "<", // This is the link to the previous page
+                                "sNext": ">"//, // This is the link to the next page
+                                //"sLast": "Last page" // This is the link to the last page
+							}
+      					},
+        			columns: [
+           					{ "data": "name" },
+             				{"data":   "name",'bSortable': false,
+                				render: function ( data, type, row ) {
+                    			if ( type === 'display' ) {
+                                    return '<input id="{!typeofConfig}ObjectCheck_'+row.name+'" class="object{!typeofConfig}" type="checkbox" />';
+                    			}
+                    			return data;
+                						}
+            				}
+        		]});
+        var emptyJson='{"data":[] }';
+        getDependentObjects(emptyJson);});
+        
+       function getDependentObjDestroy(result)
+       {
+			if(result == 'Their is no dependency You can safely delete records .')
+            {
+                j$('#myDialogue').modal('show');
+            }
+            else
+            {
+                dependentTabel.destroy();
+                getDependentObjects(result);
+                j$('#myModal').modal('show');
+            }
+        }
+       function getDependentObjects(result)
+        {
+            var lstDepedent = JSON.parse(result);
+            var dependentListData = [] ;
+            for (var i = 0; i < lstDepedent.data.length; i++) 
+            {
+				var item = lstDepedent.data[i];
+				if(item.parent == '')
+				{
+					dependentListData.push({
+    				"name": item.name}); 
+                }
+          }
+          dependentTabel = j$('#dependentTables').DataTable({
+                data:dependentListData,
+        	 	"oLanguage": {
+                        "sInfo": "_TOTAL_ entries",//"_START_ to _END_ of _TOTAL_ entries",
+         					"sInfoEmpty": "0 to 0 of 0 entries",
+                    
+                        	"oPaginate": {
+								"sPrevious": "<", // This is the link to the previous page
+                                "sNext": ">"// This is the link to the next page
+							}
+      					},
+         		columns: [
+            		{ "data": "name"}
+	         	] 
+    	 		});
+        }
+        function getRecords(result)
+        {
+        	j$("#recordStdCount").text("Their are "+result +" records in "+selectedData+" Object");   
+            j$('#seeRecords').modal('show');
+        }
+        function getReport(result)
+        {
+            selectedData =  result;
+            seeRecords(selectedData);
+            j$('#seeRecords').modal('show');
+        }
+        
+		function loadSelected{!typeofConfig}Table(objectName,isSelected)
+		{
+			{!typeofConfig}SelectedData = [];
+            for (var i = 0; i < configJsonData{!typeofConfig}.data.length; i++) 
+			{
+				var item = configJsonData{!typeofConfig}.data[i];
+                if(item.name == objectName)
+				{
+					item.enbl = isSelected ? '1' : '0';
+                }	
+                if(item.enbl == '1')
+				{
+					{!typeofConfig}SelectedData.push({
+						"name": item.name,
+						"configID":item.configID+'$'+item.name
+					}); 
+				}
+             }
+             {!typeofConfig}SelectedTable.destroy();
+             {!typeofConfig}SelectedTable = j$('#{!typeofConfig}SelectedDTTable').DataTable( {
+        			data: {!typeofConfig}SelectedData,
+                    "oLanguage": {
+                        "sInfo": "_TOTAL_ entries",//"_START_ to _END_ of _TOTAL_ entries",
+         					"sInfoEmpty": "0 to 0 of 0 entries",
+                        	"oPaginate": {
+								"sPrevious": "<", // This is the link to the previous page
+                                "sNext": ">"// This is the link to the next page
+							}
+      					},
+					columns: [{ "data": "name" },{ "data": "configID", "visible": false },{"data": function ( data, type,row ) {
+                    
+                    return '<a href="#" onclick="getReport(\''+data.name+'\'); return false;">See Number of Records</a>';}
+  			}]});
+            }
+         	function CleanConfigurationsCompleted(){
+                //hideLoader();
+         	toastr.success('Batch is initiated. Email notification will be sent to you soon.');
+         	}
+	</script>
+	</head>
+	<body>
+  		<div class="row">
+  			<div class="col-md-4">
+				<h3>
+                   <span class="{!Icon1}" aria-hidden="true"></span> {!Header1}
+                </h3>
+    			<table id="{!typeofConfig}byObjectDTTable" class="display" width="100%"><!--triggersbyObjectDTTable-->
+        		<thead>
+            		<tr>
+                		<th>Name</th>
+                		<th></th>
+            		</tr>
+        		</thead>
+        		<tfoot>
+            		<tr>
+                		<th>Name</th>
+                		<th></th>
+            		</tr>
+        		</tfoot>
+        		</table>	
+            </div>   
+			<div class="col-md-4">
+                 <h3>
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span> {!Header2} 
+                </h3>
+    			<table id="{!typeofConfig}SelectedDTTable" class="display" width="100%"><!--selectedTriggersDTTable-->
+        		<thead>
+            		<tr>
+                		<th>Name</th>
+                        <th></th>
+                       <th data-field="Number of Records" data-formatter="LinkFormatter">Number of Records</th>
+            		</tr>
+        		</thead>
+        		<tfoot>
+            		<tr>
+                		<th>Name</th>
+                        <th></th>
+                        <th>Number of Records</th>
+            		</tr>
+        		</tfoot>
+        		</table>
+            </div>
+            </div>
+			<div class="btn-group" style="float:right;">
+  		<p><apex:outputText value="" id="view" /></p>
+        <apex:actionFunction name="CleanConfigurations{!typeofConfig}" action="{!CleanConfigurations}" rerender="" oncomplete="getDependentObjDestroy('{!dependentString}');" status="">     
+     		<apex:param id="ConfigListParam" name="ConfigList"  assignTo="{!ConfigurationList}" value="getDependentObjDestroy('{!dependentString}');"  />
+            <apex:param id="configNameParam" name="configName"  assignTo="{!ConfigName}" value="" />
+ 		</apex:actionFunction>
+        <apex:outputPanel id="dummy">
+       		<apex:actionFunction name="DeleteObjectRecords" action="{!deleteData}" reRender="dummy">     
+     		</apex:actionFunction>
+        </apex:outputPanel> 
+        <apex:actionFunction name="seeRecords" action="{!seeNumberOfRecords}" oncomplete="getRecords('{!numberOfRecords}');">     
+			<apex:param id="recordVal" name="recordNumber"  assignTo="{!objName}" value="" />
+ 		</apex:actionFunction>
+        <apex:commandLink onclick="delete{!typeofConfig}();return false;" >               
+			<apex:commandButton value="Next" styleClass="btn btn-default" onclick="showLoader()" />
+       </apex:commandLink>
+	</div>
+    <div class="container">
+  	<!-- Modal -->
+  	<div class="modal fade" id="myModal" role="dialog">
+    	<div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">These Objects are also get deleted due to lookUp relationship..</h4>
+        </div>
+        <div class="modal-body">
+            <table id="dependentTables" class="display"></table>
+          <p>{!dependentObjList}</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" >Close</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal" onClick = "DeleteObjectRecords()">Delete</button>
+        </div>
+            </div>
+        </div>
+             </div>
+        <div class="modal fade" id="myDialogue" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">These Objects are also get deleted due to lookUp relationship..</h4>
+        </div>
+       
+          <p>Their is no dependency .You can safely delete object's records</p>
+        
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" >Close</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal" onClick = "DeleteObjectRecords()">Delete</button>
+        </div>
+      </div>
+      
+            </div>
+             </div>
+              <div class="modal fade" id="seeRecords" role="dialog">
+    <div class="modal-dialog modal-sm">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Number of Records </h4>
+        </div>
+       <div id="numberOfStdRecords" title = "See Number of Records">
+         <div> <span id="recordStdCount"></span></div>
+	</div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" >Close</button>
+        
+        </div> 
+            </div>
+        </div>
+             </div>
+            
+
+</div>
+      
+	</body>
+        
+	</apex:form>
+  
+</apex:component>
